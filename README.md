@@ -30,6 +30,7 @@ GRANT ALL PRIVILEGES ON osmc.* TO 'osuser'@'localhost';
 FLUSH PRIVILEGES;
 ```
 Do remember it needs to run parallel to the main program the whole time.
+
 9. Start the main program. Open the terminal move to the main the directory and run
 ```
 go run ./main

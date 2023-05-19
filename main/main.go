@@ -8,6 +8,7 @@ import (
 
 	"github.com/ccr1m3/osmc/main/db"
 	"github.com/ccr1m3/osmc/main/discord"
+	"github.com/ccr1m3/osmc/main/discord/slashcommands"
 	"github.com/ccr1m3/osmc/main/env"
 
 	"github.com/joho/godotenv"
@@ -32,6 +33,7 @@ func main() {
 	}
 	db.Init()
 	discord.Init()
+	slashcommands.Init()
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 	log.Info("initialization done")

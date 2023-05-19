@@ -1,8 +1,6 @@
 package discord
 
 import (
-	"fmt"
-
 	"github.com/bwmarrin/discordgo"
 
 	log "github.com/sirupsen/logrus"
@@ -17,7 +15,7 @@ func initChannels() error {
 		log.Error("failed to get guild channels: ", err.Error())
 	}
 	for _, channel := range channels {
-		if channel.Name == "BotChannel" {
+		if channel.Name == "BotChannels" {
 			BotChannels = channel
 		}
 		if channel.Name == "rank-roles" {
@@ -71,5 +69,5 @@ func initHowTo() error {
 }
 
 func howtomessage() string {
-	return fmt.Sprintf("")
+	return "lorem ipsum dolor"
 }

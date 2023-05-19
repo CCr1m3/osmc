@@ -15,7 +15,7 @@ import (
 type UpdateRank struct{}
 
 func (p UpdateRank) Name() string {
-	return "updateRank"
+	return "updaterank"
 }
 
 func (p UpdateRank) Description() string {

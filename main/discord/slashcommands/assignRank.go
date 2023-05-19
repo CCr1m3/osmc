@@ -17,7 +17,7 @@ import (
 type AssignRank struct{}
 
 func (p AssignRank) Name() string {
-	return "sync"
+	return "assignrank"
 }
 
 func (p AssignRank) Description() string {
@@ -32,7 +32,7 @@ func (p AssignRank) RequiredPerm() *int64 {
 func (p AssignRank) Options() []*discordgo.ApplicationCommandOption {
 	return []*discordgo.ApplicationCommandOption{
 		{
-			Name:        "Username",
+			Name:        "username",
 			Description: "Username in omega strikers",
 			Type:        discordgo.ApplicationCommandOptionString,
 			Required:    true,
@@ -47,7 +47,7 @@ func (p AssignRank) Run(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		optionMap[opt.Name] = opt
 	}
 	playerID := i.Member.User.ID
-	username := strings.ToLower(optionMap["Username"].StringValue())
+	username := strings.ToLower(optionMap["username"].StringValue())
 	ctx := context.WithValue(context.Background(), static.UUIDKey, uuid.New())
 	log.WithFields(log.Fields{
 		string(static.UUIDKey):     ctx.Value(static.UUIDKey),
@@ -126,7 +126,7 @@ func (p AssignRank) Run(s *discordgo.Session, i *discordgo.InteractionCreate) {
 type UnassignRank struct{}
 
 func (p UnassignRank) Name() string {
-	return "unsync"
+	return "unassignrank"
 }
 
 func (p UnassignRank) Description() string {
@@ -141,7 +141,7 @@ func (p UnassignRank) RequiredPerm() *int64 {
 func (p UnassignRank) Options() []*discordgo.ApplicationCommandOption {
 	return []*discordgo.ApplicationCommandOption{
 		{
-			Name:        "Discord user",
+			Name:        "discorduser",
 			Description: "User in Discord",
 			Type:        discordgo.ApplicationCommandOptionUser,
 			Required:    true,
@@ -157,7 +157,7 @@ func (p UnassignRank) Run(s *discordgo.Session, i *discordgo.InteractionCreate) 
 		optionMap[opt.Name] = opt
 	}
 	callerID := i.Member.User.ID
-	user := optionMap["Discord user"].UserValue(s)
+	user := optionMap["discorduser"].UserValue(s)
 	log.WithFields(log.Fields{
 		string(static.UUIDKey):     ctx.Value(static.UUIDKey),
 		string(static.CallerIDKey): callerID,
