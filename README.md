@@ -15,6 +15,8 @@ Allow Discord users to connect their Omega Strikers account with Discord by usin
 4. Go to OAuth2 -> General, set "Default Authorization Link" to "In-app Authorization" and select the following:
 ![image1.png](images/image1.PNG)
 5. Go to OAuth2 -> URL Generator, select bot and applications.commands and select under bot permissions everything, which was selected during Step 4.
+![image2.png](images/image2.PNG)
+![image3.png](images/image3.PNG)
 6. At the bottom you can find a generated link which you go to. It will ask, which server you want the bot to connect to and if the permissions are correct.
 7. Copy the .env.sample file, rename it to ".env" and fill out all the Discord connection info as well as the Prometheus Authorization info you find in the there.
 * discordtoken: Back on the Developers page -> Bot -> Token (just below the name). If you've never copied the token before, reset the token and copy it.
