@@ -23,7 +23,7 @@ Allow Discord users to connect their Omega Strikers account with Discord by usin
 * discordauth2secret: Right next to the Auth2ID, you can find the Secret. If you've never copied it before, you need to reset it.
 * prometheusauth: jwt inside the identity.json
 * prometheusrefreshtoken: refreshToken inside the identity.json
-8. Now prepare the MySQL server. With the default settings in the .env, it should look like this:
+8. Prepare the MySQL server. With the default settings in the .env, it should look like this:
 ```
 CREATE DATABASE IF NOT EXISTS osmc;
 CREATE USER 'osuser'@'localhost' IDENTIFIED BY 'ospassword';
@@ -33,7 +33,7 @@ FLUSH PRIVILEGES;
 ```
 Do remember it needs to run parallel to the main program the whole time.
 
-9. Start the main program. Open the terminal move to the main the directory and run
+9. Start the main program. Open the terminal move to the main directory and run
 ```
 go run ./main
 ```
