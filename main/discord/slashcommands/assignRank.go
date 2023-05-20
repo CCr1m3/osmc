@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/ccr1m3/osmc/main/db"
 	"github.com/ccr1m3/osmc/main/prometheus"
 	"github.com/ccr1m3/osmc/main/static"
 	"github.com/google/uuid"
@@ -20,7 +21,7 @@ func (p AssignRank) Name() string {
 }
 
 func (p AssignRank) Description() string {
-	return "Allows you to sync to an omega strikers account."
+	return "Assign yourself a rank based on your Omega Strikers rank."
 }
 
 func (p AssignRank) RequiredPerm() *int64 {
@@ -32,7 +33,7 @@ func (p AssignRank) Options() []*discordgo.ApplicationCommandOption {
 	return []*discordgo.ApplicationCommandOption{
 		{
 			Name:        "username",
-			Description: "Username in omega strikers",
+			Description: "Username in Omega Strikers",
 			Type:        discordgo.ApplicationCommandOptionString,
 			Required:    true,
 		},
@@ -79,7 +80,7 @@ func (p AssignRank) Run(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		}
 	}()
 
-	err = prometheus.LinkPlayerToUsername(ctx, playerID, username)
+	account, err := prometheus.LinkPlayerToUsername(ctx, playerID, username)
 	if err != nil {
 		log.Errorf("failed to sync player %s with username %s: "+err.Error(), playerID, username)
 		switch {
@@ -88,38 +89,45 @@ func (p AssignRank) Run(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				string(static.UUIDKey):     ctx.Value(static.UUIDKey),
 				string(static.CallerIDKey): i.Member.User.ID,
 				string(static.UsernameKey): username,
-			}).Warning("failed to sync player, username invalid")
+			}).Warning("failed to connect player, username invalid")
 			message = fmt.Sprintf("Could not find username: %s", username)
-		case errors.Is(err, static.ErrUserAlreadyLinked):
-			log.WithFields(log.Fields{
-				string(static.UUIDKey):     ctx.Value(static.UUIDKey),
-				string(static.CallerIDKey): i.Member.User.ID,
-			}).Warning("failed to link player, user already linked")
-			message = "You have already linked an omega strikers account. Please contact a mod if you want to unsync."
 		case errors.Is(err, static.ErrUsernameAlreadyLinked):
 			log.WithFields(log.Fields{
 				string(static.UUIDKey):     ctx.Value(static.UUIDKey),
 				string(static.CallerIDKey): i.Member.User.ID,
 				string(static.UsernameKey): username,
 			}).Warning("failed to sync player, username already synced")
-			message = fmt.Sprintf("%s is already linked to an account. Please contact a mod if you think you are the rightful owner of the account.", username)
+			message = fmt.Sprintf("%s is already connected to another user. Please contact a moderator if you think you are the rightful owner of the account.", username)
+		case errors.Is(err, static.ErrUserAlreadyLinked):
+			log.WithFields(log.Fields{
+				string(static.UUIDKey):     ctx.Value(static.UUIDKey),
+				string(static.CallerIDKey): i.Member.User.ID,
+			}).Warning("failed to connect player, user already connect")
+			message = fmt.Sprintf("You are already connected to %s. Please contact a moderator if you wish to disconnect from this account.", account.PlayerUsername)
 		default:
 			log.WithFields(log.Fields{
 				string(static.UUIDKey):     ctx.Value(static.UUIDKey),
 				string(static.CallerIDKey): i.Member.User.ID,
 				string(static.UsernameKey): username,
 				string(static.ErrorKey):    err.Error(),
-			}).Error("failed to sync player")
-			message = fmt.Sprintf("Failed to link to %s.", username)
+			}).Error("failed to connect player")
+			message = fmt.Sprintf("Failed to connect to %s.", username)
 		}
 		return
 	}
+	account, err = db.GetPlayerByID(ctx, playerID)
+	if err != nil {
+		log.Warning("failed to get player", err.Error())
+		message = fmt.Sprintf("Successfully assigned rank to %s.", i.Member.User.Mention())
+		return
+	}
+	rank := prometheus.GetRank(account.Elo).Name
 	log.WithFields(log.Fields{
 		string(static.UUIDKey):     ctx.Value(static.UUIDKey),
 		string(static.CallerIDKey): i.Member.User.ID,
 		string(static.UsernameKey): username,
 	}).Info("player successfully synced")
-	message = fmt.Sprintf("Successfully synchronized to %s.", username)
+	message = fmt.Sprintf("Successfully assigned %s to %s!", rank, i.Member.User.Mention())
 }
 
 type UnassignRank struct{}
@@ -129,7 +137,7 @@ func (p UnassignRank) Name() string {
 }
 
 func (p UnassignRank) Description() string {
-	return "Allow mods to unsync someone from his Omega Strikers' account."
+	return "Allows mods to disconnect someone of their Omega Strikers account."
 }
 
 func (p UnassignRank) RequiredPerm() *int64 {
@@ -188,7 +196,7 @@ func (p UnassignRank) Run(s *discordgo.Session, i *discordgo.InteractionCreate) 
 		}
 	}()
 	if i.Member.Permissions&discordgo.PermissionModerateMembers != discordgo.PermissionModerateMembers {
-		message = "You do not have the permission to unsync."
+		message = "You do not have the permission to disconnect someone."
 		return
 	}
 	err = prometheus.UnlinkPlayer(ctx, user.ID)
@@ -198,18 +206,18 @@ func (p UnassignRank) Run(s *discordgo.Session, i *discordgo.InteractionCreate) 
 				string(static.UUIDKey):     ctx.Value(static.UUIDKey),
 				string(static.CallerIDKey): i.Member.User.ID,
 				string(static.PlayerIDKey): user.ID,
-			}).Warning("player is not synced")
-			message = fmt.Sprintf("%s has not synchronized an omega strikers account.", user.Mention())
+			}).Warning("player is not connected")
+			message = fmt.Sprintf("%s is not connected to an Omega Strikers account.", user.Mention())
 		} else {
 			log.WithFields(log.Fields{
 				string(static.UUIDKey):     ctx.Value(static.UUIDKey),
 				string(static.CallerIDKey): i.Member.User.ID,
 				string(static.PlayerIDKey): user.ID,
 				string(static.ErrorKey):    err.Error(),
-			}).Error("failed to unsync player")
-			message = fmt.Sprintf("Failed to unsync %s.", user.Mention())
+			}).Error("failed to disconnect player")
+			message = fmt.Sprintf("Failed to disconnect %s.", user.Mention())
 		}
 		return
 	}
-	message = fmt.Sprintf("Successfully unsynced %s.", user.Mention())
+	message = fmt.Sprintf("Successfully disconnected %s!", user.Mention())
 }

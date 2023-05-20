@@ -58,7 +58,7 @@ INSERT INTO migrations (version) VALUES (0);`
 
 var migration1 = `CREATE TABLE players (
     discordID VARCHAR(100) UNIQUE NOT NULL,
-		elo INTEGER DEFAULT 1500 NOT NULL,
+		elo INTEGER DEFAULT 0 NOT NULL,
 		playerusername VARCHAR(50) DEFAULT "" NOT NULL,
 		lastrankupdate INT NOT NULL DEFAULT 0,
 		PRIMARY KEY (discordID)

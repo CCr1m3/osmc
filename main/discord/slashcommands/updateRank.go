@@ -3,7 +3,9 @@ package slashcommands
 import (
 	"context"
 	"errors"
+	"fmt"
 
+	"github.com/ccr1m3/osmc/main/db"
 	"github.com/ccr1m3/osmc/main/prometheus"
 	"github.com/ccr1m3/osmc/main/static"
 
@@ -19,7 +21,7 @@ func (p UpdateRank) Name() string {
 }
 
 func (p UpdateRank) Description() string {
-	return "Allows you to update Discord role using your linked Omega Strikers account."
+	return "Allows you to update your Discord role using your connected Omega Strikers account."
 }
 
 func (p UpdateRank) RequiredPerm() *int64 {
@@ -37,7 +39,7 @@ func (p UpdateRank) Run(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	log.WithFields(log.Fields{
 		string(static.UUIDKey):     ctx.Value(static.UUIDKey),
 		string(static.CallerIDKey): playerID,
-	}).Info("update slash command invoked")
+	}).Info("updateRank slash command invoked")
 	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
@@ -77,8 +79,8 @@ func (p UpdateRank) Run(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			log.WithFields(log.Fields{
 				string(static.UUIDKey):     ctx.Value(static.UUIDKey),
 				string(static.CallerIDKey): i.Member.User.ID,
-			}).Warning("player is not linked")
-			message = "You have not synchronized your Omega Strikers account. Please use \"assignRank\" first."
+			}).Warning("player is not connected")
+			message = "You are not connected to an Omega Strikers account. Please use \"assignRank\" first."
 		default:
 			log.WithFields(log.Fields{
 				string(static.UUIDKey):     ctx.Value(static.UUIDKey),
@@ -89,5 +91,12 @@ func (p UpdateRank) Run(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		}
 		return
 	}
-	message = "Successfully updated your rank."
+	account, err := db.GetPlayerByID(ctx, playerID)
+	if err != nil {
+		log.Warning("failed to get player", err.Error())
+		message = "Successfully updated your rank."
+		return
+	}
+	rank := prometheus.GetRank(account.Elo).Name
+	message = fmt.Sprintf("Successfully updated your rank to %s.", rank)
 }

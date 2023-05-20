@@ -25,7 +25,7 @@ func initChannels() error {
 	if BotChannels == nil {
 		BotChannels, err = session.GuildChannelCreate(GuildID, "BotChannels", discordgo.ChannelTypeGuildCategory)
 		if err != nil {
-			log.Fatal("failed to create channel group Ai.Mi: ", err.Error())
+			log.Fatal("failed to create channel group BotChannels: ", err.Error())
 		}
 	}
 	if HowToChannel == nil {
@@ -69,5 +69,5 @@ func initHowTo() error {
 }
 
 func howtomessage() string {
-	return "lorem ipsum dolor"
+	return "Hello, my name is <something> and I'm one of this Discord's assistants. I'm here to assign you ranks based on your performance in the game.\n\nUse `/assignRank` so I can connect the given Omega Strikers and assign a rank to you! Do mind that connecting an account that does not belong to you is punishable.\nIn case you wish to disconnect your Omega Strikers account, please contact a moderator.\n\nAnd if you have improved your rank after I have already assigned a rank to you, use `/updateRank` so I can update your rank so everyone can see your progress!\n\nGood luck in your journey to Omega!"
 }

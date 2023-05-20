@@ -40,6 +40,4 @@ go run ./main
 
 # todo
 
-- update Channelnames
-- update slashcommand responses
-- update how-to message
+- implement pro league role

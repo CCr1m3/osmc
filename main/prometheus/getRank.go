@@ -13,29 +13,29 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func LinkPlayerToUsername(ctx context.Context, playerID string, username string) error {
+func LinkPlayerToUsername(ctx context.Context, playerID string, username string) (*db.Player, error) {
 	player, err := db.GetOrCreatePlayerByID(ctx, playerID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if player.PlayerUsername == "" {
 		_, err := db.GetPlayerByUsername(ctx, username)
 		if err == nil {
-			return static.ErrUsernameAlreadyLinked
+			return nil, static.ErrUsernameAlreadyLinked
 		} else if err != nil && !errors.Is(err, static.ErrNotFound) {
-			return err
+			return nil, err
 		}
 		err = player.SetPlayerUsername(ctx, username)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		err = UpdateRank(ctx, playerID)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		return nil
+		return player, nil
 	} else {
-		return static.ErrUserAlreadyLinked
+		return player, static.ErrUserAlreadyLinked
 	}
 }
 
@@ -152,25 +152,7 @@ func updatePlayerDiscordRole(ctx context.Context, playerID string) error {
 	if err != nil {
 		return err
 	}
-	var roleToAdd *discordgo.Role
-	if player.Elo >= 2900 {
-		roleToAdd = discord.RoleOmega
-	} else if player.Elo >= 2600 {
-		roleToAdd = discord.RoleChallenger
-	} else if player.Elo >= 2300 {
-		roleToAdd = discord.RoleDiamond
-	} else if player.Elo >= 2000 {
-		roleToAdd = discord.RolePlatinum
-	} else if player.Elo >= 1700 {
-		roleToAdd = discord.RoleGold
-	} else if player.Elo >= 1400 {
-		roleToAdd = discord.RoleSilver
-	} else if player.Elo >= 1100 {
-		roleToAdd = discord.RoleBronze
-	} else if player.Elo > 0 {
-		roleToAdd = discord.RoleRookie
-	}
-
+	roleToAdd := GetRank(player.Elo)
 	member, err := session.GuildMember(guildID, player.DiscordID)
 	if err != nil {
 		return err
@@ -222,6 +204,30 @@ func updatePlayerDiscordRole(ctx context.Context, playerID string) error {
 		}
 	}
 	return err
+}
+
+func GetRank(elo int) *discordgo.Role {
+	var role *discordgo.Role
+	if elo >= 2900 {
+		role = discord.RoleOmega
+	} else if elo >= 2600 {
+		// 	role = discord.RoleProLeague
+		// } else if {
+		role = discord.RoleChallenger
+	} else if elo >= 2300 {
+		role = discord.RoleDiamond
+	} else if elo >= 2000 {
+		role = discord.RolePlatinum
+	} else if elo >= 1700 {
+		role = discord.RoleGold
+	} else if elo >= 1400 {
+		role = discord.RoleSilver
+	} else if elo >= 1100 {
+		role = discord.RoleBronze
+	} else if elo > 0 {
+		role = discord.RoleRookie
+	}
+	return role
 }
 
 func Init() {
