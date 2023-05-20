@@ -46,6 +46,11 @@ var Discord struct {
 	OAuth2RedirectURL string
 }
 
+var Prometheus struct {
+	Authorization string
+	Refreshtoken  string
+}
+
 func Init() {
 	DB.Type = dbtypeenv(os.Getenv("dbtype"))
 	if DB.Type == "" {
@@ -73,4 +78,7 @@ func Init() {
 	Discord.OAuth2ID = os.Getenv("discordoauth2id")
 	Discord.OAuth2Secret = os.Getenv("discordoauth2secret")
 	Discord.OAuth2RedirectURL = os.Getenv("discordoauth2redirectURL")
+
+	Prometheus.Authorization = os.Getenv("prometheusauth")
+	Prometheus.Refreshtoken = os.Getenv("prometheusrefreshtoken")
 }

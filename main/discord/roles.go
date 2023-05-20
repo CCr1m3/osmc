@@ -5,8 +5,9 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// var RoleTopLeague *discordgo.Role
 var RoleOmega *discordgo.Role
+
+// var RoleProLeague *discordgo.Role
 var RoleChallenger *discordgo.Role
 var RoleDiamond *discordgo.Role
 var RolePlatinum *discordgo.Role
@@ -23,12 +24,12 @@ func initRoles() error {
 		return err
 	}
 	for _, role := range roles {
-		// if role.Name == "Top League" {
-		// 	RoleTopLeague = role
-		// }
 		if role.Name == "Omega" {
 			RoleOmega = role
 		}
+		// if role.Name == "Pro League" {
+		// 	RoleProLeague = role
+		// }
 		if role.Name == "Challenger" {
 			RoleChallenger = role
 		}
@@ -53,10 +54,6 @@ func initRoles() error {
 	}
 	mentionnable := false
 	hoist := false
-	// if RoleTopLeague == nil {
-	// 	color :=
-	// 	RoleTopLeague, err = session.GuildRoleCreate(GuildID, &discordgo.RoleParams{Name: "Top League", Color : &color, Mentionable: &mentionnable, Hoist: &hoist})
-	// }
 	if RoleOmega == nil {
 		color := 15548997
 		RoleOmega, err = session.GuildRoleCreate(GuildID, &discordgo.RoleParams{Name: "Omega", Color: &color, Mentionable: &mentionnable, Hoist: &hoist})
@@ -64,6 +61,13 @@ func initRoles() error {
 			log.Fatalf("failed to create role RoleOmega")
 		}
 	}
+	// if RoleProLeague == nil {
+	// 	color :=
+	// 	RoleProLeague, err = session.GuildRoleCreate(GuildID, &discordgo.RoleParams{Name: "Top League", Color : &color, Mentionable: &mentionnable, Hoist: &hoist})
+	// 	if err != nil {
+	// 		log.Fatalf("failed to create role RoleProLeague")
+	// 	}
+	// }
 	if RoleChallenger == nil {
 		color := 10181046
 		RoleChallenger, err = session.GuildRoleCreate(GuildID, &discordgo.RoleParams{Name: "Challenger", Color: &color, Mentionable: &mentionnable, Hoist: &hoist})
@@ -112,6 +116,6 @@ func initRoles() error {
 			log.Fatalf("failed to create role RoleRookie")
 		}
 	}
-	RankRoles = []*discordgo.Role{RoleOmega, RoleChallenger, RoleDiamond, RolePlatinum, RoleGold, RoleSilver, RoleBronze, RoleRookie}
+	RankRoles = []*discordgo.Role{RoleOmega /* RoleProLeague,*/, RoleChallenger, RoleDiamond, RolePlatinum, RoleGold, RoleSilver, RoleBronze, RoleRookie}
 	return err
 }

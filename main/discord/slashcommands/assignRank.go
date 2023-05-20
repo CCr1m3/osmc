@@ -6,10 +6,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/bwmarrin/discordgo"
 	"github.com/ccr1m3/osmc/main/prometheus"
 	"github.com/ccr1m3/osmc/main/static"
-
-	"github.com/bwmarrin/discordgo"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )

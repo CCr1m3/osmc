@@ -177,12 +177,12 @@ func updatePlayerDiscordRole(ctx context.Context, playerID string) error {
 	}
 	var currentRole *discordgo.Role
 	for _, roleID := range member.Roles {
-		// if roleID == discord.RoleTopLeague.ID {
-		// 	currentRole = discord.RoleTopLeague
-		// }
 		if roleID == discord.RoleOmega.ID {
 			currentRole = discord.RoleOmega
 		}
+		// if roleID == discord.RoleProLeague.ID {
+		// 	currentRole = discord.RoleProLeague
+		// }
 		if roleID == discord.RoleChallenger.ID {
 			currentRole = discord.RoleChallenger
 		}
@@ -225,5 +225,4 @@ func updatePlayerDiscordRole(ctx context.Context, playerID string) error {
 }
 
 func Init() {
-
 }

@@ -6,10 +6,15 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"strings"
+
+	"github.com/ccr1m3/osmc/main/env"
+	"github.com/ccr1m3/osmc/main/static"
 )
 
-type PrometheusResponse struct {
-	Players []struct {
+type PrometheusQueryResponse struct {
+	Matches []struct {
 		Username    string `json:"username"`
 		PlayerID    string `json:"playerId"`
 		LogoID      string `json:"logoId"`
@@ -25,7 +30,33 @@ type PrometheusResponse struct {
 			OrganizationID string `json:"organizationId"`
 			LogoID         string `json:"logoId"`
 			Name           string `json:"name"`
+		} `json:"organization"`
+	} `json:"matches"`
+	Paging struct {
+		Page     int `json:"page"`
+		PageSize int `json:"pageSize"`
+	} `json:"paging"`
+}
+
+type PrometheusSearchResponse struct {
+	Players []struct {
+		Username    string   `json:"username"`
+		PlayerID    string   `json:"playerId"`
+		LogoID      string   `json:"logoId"`
+		Title       string   `json:"title"`
+		NameplateID string   `json:"nameplateId"`
+		EmoticonID  string   `json:"emoticonId"`
+		TitleID     string   `json:"titleId"`
+		Tags        []string `json:"tags"`
+		PlatformIds struct {
+		} `json:"platformIds"`
+		MasteryLevel int `json:"masteryLevel"`
+		Organization struct {
+			OrganizationID string `json:"organizationId"`
+			LogoID         string `json:"logoId"`
+			Name           string `json:"name"`
 		} `json:"organization,omitempty"`
+		SocialURL            string `json:"socialUrl,omitempty"`
 		Rank                 int    `json:"rank"`
 		Wins                 int    `json:"wins"`
 		Losses               int    `json:"losses"`
@@ -38,7 +69,6 @@ type PrometheusResponse struct {
 		} `json:"mostPlayedCharacters"`
 		CurrentDivisionID string `json:"currentDivisionId"`
 		ProgressToNext    int    `json:"progressToNext"`
-		SocialURL         string `json:"socialUrl,omitempty"`
 	} `json:"players"`
 	Paging struct {
 		StartRank  int `json:"startRank"`
@@ -53,8 +83,17 @@ type PlayerResponse struct {
 }
 
 func GetRankInfoFromUsername(ctx context.Context, username string) (*PlayerResponse, error) {
-	prometheusUrl := fmt.Sprintf("https://prometheus.odysseyinteractive.gg/api/v1/ranked/leaderboard/players?startRank=1&pageSize=100")
-	resp, err := http.Get(prometheusUrl)
+	var bearer = "Bearer " + env.Prometheus.Authorization
+	var refreshtoken = env.Prometheus.Refreshtoken
+	prometheusUrl := fmt.Sprintf("https://prometheus-proxy.odysseyinteractive.gg/api/v1/players?usernameQuery=%s", url.PathEscape(username))
+	req, err := http.NewRequest("GET", prometheusUrl, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("X-Authorization", bearer)
+	req.Header.Add("X-Refresh-Token", refreshtoken)
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -63,40 +102,47 @@ func GetRankInfoFromUsername(ctx context.Context, username string) (*PlayerRespo
 	if err != nil {
 		return nil, err
 	}
-	var response PrometheusResponse
-	err = json.Unmarshal(jsonBytes, &response)
+	var queryResponse PrometheusQueryResponse
+	err = json.Unmarshal(jsonBytes, &queryResponse)
 	if err != nil {
 		return nil, err
 	}
 	var returnInfo PlayerResponse
-	returnInfo = PlayerResponse{Username: "", Elo: 0}
-	return &returnInfo, nil
+	if len(queryResponse.Matches) == 1 {
+		if strings.EqualFold(username, queryResponse.Matches[0].Username) {
+			usernameID := queryResponse.Matches[0].PlayerID
+			prometheusUrl = fmt.Sprintf("https://prometheus-proxy.odysseyinteractive.gg/api/v1/ranked/leaderboard/search/%s", url.PathEscape(usernameID))
+			req, err := http.NewRequest("GET", prometheusUrl, nil)
+			if err != nil {
+				return nil, err
+			}
+			req.Header.Add("X-Authorization", bearer)
+			req.Header.Add("X-Refresh-Token", refreshtoken)
+			resp, err := client.Do(req)
+			if err != nil {
+				return nil, err
+			}
+			defer resp.Body.Close()
+			jsonBytes, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			var searchResponse PrometheusSearchResponse
+			err = json.Unmarshal(jsonBytes, &searchResponse)
+			if err != nil {
+				return nil, err
+			}
+			for _, player := range searchResponse.Players {
+				if player.PlayerID == usernameID {
+					returnInfo = PlayerResponse{Username: username, Elo: player.Rating}
+					break
+				}
+			}
+			return &returnInfo, nil
+		} else {
+			return nil, static.ErrUsernameNotFound
+		}
+	} else {
+		return nil, static.ErrUsernameNotFound
+	}
 }
-
-// if strings.EqualFold(response.Error, "") {
-// 	if !response.RankedStats.IsRanked {
-// 		corestrikeUrl := fmt.Sprintf("https://corestrike.gg/lookup/%s?region=Europe&json=true", url.PathEscape(username))
-// 		resp, err := http.Get(corestrikeUrl)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		defer resp.Body.Close()
-// 		jsonBytes, err := io.ReadAll(resp.Body)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		err = json.Unmarshal(jsonBytes, &response)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 	}
-// 	if response.RankedStats.IsRanked {
-// 		return &response, nil
-// 	} else {
-// 		return &response, static.ErrUnrankedUser
-// 	}
-// } else if strings.EqualFold(response.Error, "Invalid username") {
-// 	return nil, static.ErrUsernameInvalid
-// } else {
-// 	return nil, static.ErrCorestrikeNotFound
-// }
