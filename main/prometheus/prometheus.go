@@ -138,7 +138,12 @@ func GetRankInfoFromUsername(ctx context.Context, username string) (*PlayerRespo
 					break
 				}
 			}
-			return &returnInfo, nil
+			if strings.Compare(returnInfo.Username, "") == 0 {
+				returnInfo = PlayerResponse{Username: username, Elo: 0}
+				return &returnInfo, static.ErrUsernameNotOnGlobal
+			} else {
+				return &returnInfo, nil
+			}
 		} else {
 			return nil, static.ErrUsernameNotFound
 		}

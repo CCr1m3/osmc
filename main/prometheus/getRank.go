@@ -120,6 +120,8 @@ func UpdateRank(ctx context.Context, playerID string) error {
 				}
 			}
 			return err
+		} else if errors.Is(err, static.ErrUsernameNotOnGlobal) {
+			log.Warningf("username %s was not on the global leaderboards", info.Username)
 		} else {
 			return err
 		}
@@ -224,7 +226,7 @@ func GetRank(elo int) *discordgo.Role {
 		role = discord.RoleSilver
 	} else if elo >= 1100 {
 		role = discord.RoleBronze
-	} else if elo > 0 {
+	} else if elo >= 0 {
 		role = discord.RoleRookie
 	}
 	return role
