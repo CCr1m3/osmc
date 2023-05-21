@@ -108,46 +108,58 @@ func GetRankInfoFromUsername(ctx context.Context, username string) (*PlayerRespo
 		return nil, err
 	}
 	var returnInfo PlayerResponse
+	usernameID := ""
 	if len(queryResponse.Matches) == 1 {
 		if strings.EqualFold(username, queryResponse.Matches[0].Username) {
-			usernameID := queryResponse.Matches[0].PlayerID
-			prometheusUrl = fmt.Sprintf("https://prometheus-proxy.odysseyinteractive.gg/api/v1/ranked/leaderboard/search/%s", url.PathEscape(usernameID))
-			req, err := http.NewRequest("GET", prometheusUrl, nil)
-			if err != nil {
-				return nil, err
-			}
-			req.Header.Add("X-Authorization", bearer)
-			req.Header.Add("X-Refresh-Token", refreshtoken)
-			resp, err := client.Do(req)
-			if err != nil {
-				return nil, err
-			}
-			defer resp.Body.Close()
-			jsonBytes, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return nil, err
-			}
-			var searchResponse PrometheusSearchResponse
-			err = json.Unmarshal(jsonBytes, &searchResponse)
-			if err != nil {
-				return nil, err
-			}
-			for _, player := range searchResponse.Players {
-				if player.PlayerID == usernameID {
-					returnInfo = PlayerResponse{Username: username, Elo: player.Rating}
-					break
-				}
-			}
-			if strings.Compare(returnInfo.Username, "") == 0 {
-				returnInfo = PlayerResponse{Username: username, Elo: 0}
-				return &returnInfo, static.ErrUsernameNotOnGlobal
-			} else {
-				return &returnInfo, nil
-			}
+			usernameID = queryResponse.Matches[0].PlayerID
 		} else {
 			return nil, static.ErrUsernameNotFound
 		}
 	} else {
-		return nil, static.ErrUsernameNotFound
+		if len(queryResponse.Matches) > 1 {
+			for _, queryMatch := range queryResponse.Matches {
+				if strings.EqualFold(username, queryMatch.Username) {
+					usernameID = queryMatch.PlayerID
+				}
+			}
+			if strings.Compare(usernameID, "") == 0 {
+				return nil, static.ErrUsernameNotFound
+			}
+		} else {
+			return nil, static.ErrUsernameNotFound
+		}
+	}
+	prometheusUrl = fmt.Sprintf("https://prometheus-proxy.odysseyinteractive.gg/api/v1/ranked/leaderboard/search/%s", url.PathEscape(usernameID))
+	req, err = http.NewRequest("GET", prometheusUrl, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("X-Authorization", bearer)
+	req.Header.Add("X-Refresh-Token", refreshtoken)
+	resp, err = client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	jsonBytes, err = io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	var searchResponse PrometheusSearchResponse
+	err = json.Unmarshal(jsonBytes, &searchResponse)
+	if err != nil {
+		return nil, err
+	}
+	for _, player := range searchResponse.Players {
+		if player.PlayerID == usernameID {
+			returnInfo = PlayerResponse{Username: username, Elo: player.Rating}
+			break
+		}
+	}
+	if strings.Compare(returnInfo.Username, "") == 0 {
+		returnInfo = PlayerResponse{Username: username, Elo: 0}
+		return &returnInfo, static.ErrUsernameNotOnGlobal
+	} else {
+		return &returnInfo, nil
 	}
 }
