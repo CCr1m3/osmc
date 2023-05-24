@@ -29,7 +29,7 @@ Allow Discord users to connect their Omega Strikers account with Discord by usin
 ```
 CREATE DATABASE IF NOT EXISTS osmc;
 CREATE USER 'osuser'@'localhost' IDENTIFIED BY 'ospassword';
-GRANT USAGE ON *.* TO 'osuser'@'localhost' IDENTIFIED BY 'ospassword';
+GRANT USAGE ON *.* TO 'osuser'@'localhost';
 GRANT ALL PRIVILEGES ON osmc.* TO 'osuser'@'localhost';
 FLUSH PRIVILEGES;
 ```
@@ -43,3 +43,4 @@ go run ./main
 # todo
 
 - implement pro league role
+- implement regional leaderboard search
