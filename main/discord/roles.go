@@ -15,6 +15,7 @@ var RoleGold *discordgo.Role
 var RoleSilver *discordgo.Role
 var RoleBronze *discordgo.Role
 var RoleRookie *discordgo.Role
+var RoleUnranked *discordgo.Role
 
 var RankRoles []*discordgo.Role
 
@@ -50,6 +51,9 @@ func initRoles() error {
 		}
 		if role.Name == "Rookie" {
 			RoleRookie = role
+		}
+		if role.Name == "Unranked" {
+			RoleUnranked = role
 		}
 	}
 	mentionnable := false
@@ -116,6 +120,12 @@ func initRoles() error {
 			log.Fatalf("failed to create role RoleRookie")
 		}
 	}
-	RankRoles = []*discordgo.Role{RoleOmega /* RoleProLeague,*/, RoleChallenger, RoleDiamond, RolePlatinum, RoleGold, RoleSilver, RoleBronze, RoleRookie}
+	if RoleUnranked == nil {
+		RoleRookie, err = session.GuildRoleCreate(GuildID, &discordgo.RoleParams{Name: "Unranked", Mentionable: &mentionnable, Hoist: &hoist})
+		if err != nil {
+			log.Fatalf("failed to create role RoleUnranked")
+		}
+	}
+	RankRoles = []*discordgo.Role{RoleOmega /* RoleProLeague,*/, RoleChallenger, RoleDiamond, RolePlatinum, RoleGold, RoleSilver, RoleBronze, RoleRookie, RoleUnranked}
 	return err
 }

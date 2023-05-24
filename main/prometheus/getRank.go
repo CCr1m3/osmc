@@ -188,9 +188,11 @@ func updatePlayerDiscordRole(ctx context.Context, playerID string) error {
 		if roleID == discord.RoleRookie.ID {
 			currentRole = discord.RoleRookie
 		}
+		if roleID == discord.RoleUnranked.ID {
+			currentRole = discord.RoleUnranked
+		}
 	}
-	if currentRole != nil && roleToAdd != nil && currentRole.Position >= roleToAdd.Position {
-		//we only update for peak elo
+	if currentRole != nil && roleToAdd != nil && currentRole.Position == roleToAdd.Position {
 		return nil
 	}
 	for _, rankRole := range discord.RankRoles {
@@ -198,6 +200,9 @@ func updatePlayerDiscordRole(ctx context.Context, playerID string) error {
 		if err != nil {
 			return err
 		}
+	}
+	if player.PlayerUsername == "" {
+		return nil
 	}
 	if roleToAdd != nil {
 		err = session.GuildMemberRoleAdd(guildID, player.DiscordID, roleToAdd.ID)
@@ -226,8 +231,10 @@ func GetRank(elo int) *discordgo.Role {
 		role = discord.RoleSilver
 	} else if elo >= 1100 {
 		role = discord.RoleBronze
-	} else if elo >= 0 {
+	} else if elo > 0 {
 		role = discord.RoleRookie
+	} else {
+		role = discord.RoleUnranked
 	}
 	return role
 }
